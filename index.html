@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="電子卡磚 · 使用者說明書 — 把舞台留在房間裡，讓光芒不散場。" />
+  <title>電子卡磚 · 使用者說明書</title>
+
+  <!-- Preconnect & fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;700;900&family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ─────────── tokens ─────────── */
+    :root {
+      --bg:          #0B0A14;
+      --bg-warm:     #1A1730;
+      --bg-pink:     #1F1428;
+      --paper:       #14131F;
+      --paper-2:     #1B1A28;
+      --ink:         #F2EFE6;
+      --ink-soft:    #9B95AC;
+      --ink-faded:   #5C5868;
+      --line:        #2A2937;
+      --rose:        #FF3D7F;
+      --rose-deep:   #FFB3D1;
+      --gold:        #5EEAD4;
+      --peach:       #FFD93D;
+      --spot:        rgba(255, 61, 127, 0.18);
+      --spot-cyan:   rgba(94, 234, 212, 0.10);
+      --spot-violet: rgba(140, 80, 220, 0.15);
+
+      --serif-en:    'Unbounded', 'Noto Sans TC', 'PingFang TC', sans-serif;
+      --body-en:     'Cormorant Garamond', Georgia, serif;
+      --serif-tc:    'Noto Serif TC', 'PingFang TC', 'Microsoft JhengHei', serif;
+      --sans-tc:     'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      --mono:        'JetBrains Mono', ui-monospace, monospace;
+
+      --shadow-soft: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.4);
+      --shadow-warm: 0 10px 40px -10px rgba(255, 61, 127, .35), 0 0 80px -20px rgba(94, 234, 212, .15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans-tc);
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: .02em;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* atmospheric gradient backgrounds */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 900px 700px at 15% -5%, var(--spot) 0%, transparent 55%),
+        radial-gradient(ellipse 700px 500px at 100% 25%, var(--spot-violet) 0%, transparent 60%),
+        radial-gradient(ellipse 600px 400px at 0% 80%, var(--spot-cyan) 0%, transparent 65%),
+        radial-gradient(ellipse 500px 400px at 85% 95%, var(--spot) 0%, transparent 60%);
+      z-index: -1;
+    }
+
+    /* subtle grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .055;
+      mix-blend-mode: screen;
+      z-index: -1;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    }
+
+    /* ─────────── nav ─────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      background: rgba(11, 10, 20, 0.72);
+      border-bottom: 1px solid rgba(255, 61, 127, .12);
+    }
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: .12em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 10px; height: 10px;
+      background: var(--rose);
+      border-radius: 2px;
+      transform: rotate(45deg);
+    }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--ink-soft);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: .15em;
+      transition: color .2s;
+      font-weight: 500;
+    }
+    .nav-links a:hover { color: var(--rose); }
+
+    /* ─────────── hero ─────────── */
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 120px 32px 100px;
+      position: relative;
+    }
+    .eyebrow {
+      font-family: var(--serif-en);
+      font-size: 14px;
+      letter-spacing: .42em;
+      color: var(--rose);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .eyebrow::before {
+      content: '';
+      width: 48px; height: 1px;
+      background: var(--rose);
+    }
+    .hero h1 {
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: clamp(56px, 9vw, 128px);
+      line-height: .98;
+      letter-spacing: .04em;
+      color: var(--ink);
+      margin-bottom: 36px;
+    }
+    .hero h1 .sub-en {
+      display: block;
+      font-family: var(--serif-en);
+      font-weight: 400;
+      font-size: clamp(20px, 2.4vw, 32px);
+      letter-spacing: .35em;
+      color: var(--rose);
+      margin-top: 18px;
+      text-transform: uppercase;
+    }
+    .hero .tagline {
+      font-family: var(--serif-tc);
+      font-weight: 500;
+      font-size: clamp(22px, 2.6vw, 30px);
+      line-height: 1.6;
+      letter-spacing: .12em;
+      color: var(--ink);
+      max-width: 620px;
+      margin-bottom: 56px;
+    }
+    .hero .tagline em {
+      font-style: normal;
+      color: var(--rose);
+      font-weight: 700;
+    }
+    .hero-mockup {
+      position: absolute;
+      right: 32px;
+      top: 90px;
+      width: 340px;
+      height: 480px;
+      display: none;
+    }
+    @media (min-width: 1024px) { .hero-mockup { display: block; } }
+    .mockup-brick {
+      width: 100%; height: 100%;
+      background: linear-gradient(155deg, #1F1D2E 0%, #14131F 100%);
+      border-radius: 18px;
+      box-shadow:
+        0 30px 80px -20px rgba(255, 61, 127, .35),
+        0 0 60px -10px rgba(94, 234, 212, .15),
+        0 1px 0 rgba(255,255,255,.05) inset,
+        0 -1px 0 rgba(0,0,0,.3) inset;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mockup-screen {
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255, 61, 127, .45), transparent 55%),
+        radial-gradient(circle at 70% 80%, rgba(94, 234, 212, .25), transparent 60%),
+        linear-gradient(180deg, #1A1226, #050308);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--rose-deep);
+      font-family: var(--serif-tc);
+      font-size: 14px;
+      letter-spacing: .5em;
+      position: relative;
+      overflow: hidden;
+    }
+    .mockup-screen::before {
+      content: '✦';
+      position: absolute;
+      font-size: 80px;
+      color: var(--rose);
+      opacity: .25;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: .25; transform: scale(1); filter: blur(0); }
+      50% { opacity: .55; transform: scale(1.08); filter: blur(2px); }
+    }
+    .scroll-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--serif-en);
+      font-size: 12px;
+      letter-spacing: .35em;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      text-decoration: none;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--ink-faded);
+      transition: all .3s;
+    }
+    .scroll-hint:hover { color: var(--rose); border-color: var(--rose); }
+    .scroll-hint span { font-size: 16px; }
+
+    /* ─────────── general section ─────────── */
+    section.block {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 100px 32px;
+      position: relative;
+    }
+    .section-num {
+      font-family: var(--serif-en);
+      font-size: 12px;
+      letter-spacing: .4em;
+      color: var(--rose);
+      margin-bottom: 18px;
+    }
+    .section-title {
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: clamp(38px, 5vw, 64px);
+      line-height: 1.1;
+      letter-spacing: .04em;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .section-title .accent {
+      color: var(--rose);
+      font-style: italic;
+      font-family: var(--serif-en);
+      font-weight: 400;
+    }
+    .section-sub {
+      font-family: var(--serif-tc);
+      font-size: 18px;
+      color: var(--ink-soft);
+      letter-spacing: .1em;
+      margin-bottom: 56px;
+      max-width: 600px;
+    }
+
+    /* ─────────── intro ─────────── */
+    #intro {
+      background: linear-gradient(180deg, transparent 0%, rgba(247, 227, 213, .4) 50%, transparent 100%);
+    }
+    .intro-quote {
+      font-family: var(--serif-tc);
+      font-weight: 500;
+      font-size: clamp(28px, 3.5vw, 44px);
+      line-height: 1.45;
+      letter-spacing: .08em;
+      color: var(--ink);
+      max-width: 880px;
+      margin: 0 auto 60px;
+      text-align: center;
+      position: relative;
+    }
+    .intro-quote::before, .intro-quote::after {
+      content: '«';
+      font-family: var(--serif-en);
+      font-size: 36px;
+      color: var(--rose);
+      vertical-align: middle;
+      margin: 0 .2em;
+    }
+    .intro-quote::after { content: '»'; }
+    .intro-body {
+      font-family: var(--sans-tc);
+      font-weight: 400;
+      font-size: 17px;
+      line-height: 1.95;
+      color: var(--ink-soft);
+      max-width: 680px;
+      margin: 0 auto 70px;
+      text-align: center;
+      letter-spacing: .06em;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .feature {
+      background: var(--paper);
+      padding: 38px 30px;
+      transition: background .3s;
+    }
+    .feature:hover { background: var(--bg-warm); }
+    .feature-icon {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--rose);
+      margin-bottom: 22px;
+    }
+    .feature-icon svg { width: 100%; height: 100%; }
+    .feature-title {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: .08em;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    .feature-desc {
+      font-size: 14.5px;
+      color: var(--ink-soft);
+      line-height: 1.75;
+      letter-spacing: .04em;
+    }
+    .closing-couplet {
+      margin-top: 80px;
+      text-align: center;
+      font-family: var(--serif-tc);
+      font-size: 19px;
+      letter-spacing: .18em;
+      color: var(--ink-soft);
+      line-height: 2.2;
+    }
+    .closing-couplet p:first-child { color: var(--ink); }
+
+    /* ─────────── specs ─────────── */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .specs-grid { grid-template-columns: 1fr; gap: 40px; } }
+    .specs-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .specs-table tr {
+      border-bottom: 1px solid var(--line);
+    }
+    .specs-table tr:first-child { border-top: 1px solid var(--line); }
+    .specs-table th, .specs-table td {
+      padding: 22px 0;
+      text-align: left;
+      vertical-align: top;
+    }
+    .specs-table th {
+      font-family: var(--serif-tc);
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: .12em;
+      color: var(--ink-soft);
+      width: 35%;
+    }
+    .specs-table td {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: .02em;
+    }
+    .specs-table td .formats {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .formats span {
+      padding: 3px 9px;
+      background: var(--bg-warm);
+      border-radius: 3px;
+      font-size: 12px;
+      letter-spacing: .1em;
+      color: var(--rose-deep);
+    }
+    .specs-illustration {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 48px 32px;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+    .specs-illustration .label {
+      font-family: var(--serif-en);
+      font-size: 11px;
+      letter-spacing: .4em;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .device-svg {
+      width: 100%;
+      max-width: 240px;
+      height: auto;
+      margin: 0 auto;
+    }
+    .dim-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .dim-item .num {
+      font-family: var(--serif-en);
+      font-size: 28px;
+      color: var(--rose);
+      display: block;
+      line-height: 1;
+    }
+    .dim-item .lbl {
+      font-size: 11px;
+      letter-spacing: .25em;
+      color: var(--ink-faded);
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* ─────────── usage / steps ─────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0;
+      position: relative;
+      counter-reset: step;
+    }
+    .step {
+      padding: 40px 36px 44px;
+      position: relative;
+      border-right: 1px solid var(--line);
+    }
+    .step:last-child { border-right: none; }
+    @media (max-width: 800px) {
+      .step { border-right: none; border-bottom: 1px solid var(--line); }
+      .step:last-child { border-bottom: none; }
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step, decimal-leading-zero);
+      font-family: var(--serif-en);
+      font-size: 56px;
+      color: var(--rose);
+      opacity: .85;
+      display: block;
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+    .step h3 {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 19px;
+      color: var(--ink);
+      letter-spacing: .08em;
+      margin-bottom: 12px;
+    }
+    .step p {
+      font-size: 14.5px;
+      line-height: 1.8;
+      color: var(--ink-soft);
+      letter-spacing: .04em;
+    }
+    .tip {
+      margin-top: 50px;
+      padding: 24px 30px;
+      background: var(--bg-pink);
+      border-left: 3px solid var(--rose);
+      border-radius: 2px;
+      font-family: var(--serif-tc);
+      font-size: 16px;
+      letter-spacing: .08em;
+      color: var(--rose-deep);
+    }
+    .tip strong { font-weight: 700; }
+
+    /* ─────────── buttons (hardware) ─────────── */
+    #buttons {
+      background: linear-gradient(180deg, transparent 0%, rgba(244, 234, 218, .5) 50%, transparent 100%);
+    }
+    .btn-layout {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+    @media (max-width: 900px) { .btn-layout { grid-template-columns: 1fr; } }
+    .btn-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 36px 32px;
+      transition: transform .3s, box-shadow .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-warm);
+    }
+    .btn-card .num {
+      position: absolute;
+      top: 22px; right: 28px;
+      font-family: var(--serif-en);
+      font-size: 14px;
+      letter-spacing: .3em;
+      color: var(--ink-faded);
+    }
+    .btn-card .pill {
+      display: inline-block;
+      padding: 5px 12px;
+      background: var(--ink);
+      color: var(--bg);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .15em;
+      border-radius: 3px;
+      margin-bottom: 22px;
+    }
+    .btn-card h3 {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: .08em;
+      color: var(--ink);
+      margin-bottom: 16px;
+    }
+    .btn-card p {
+      font-size: 14.5px;
+      line-height: 1.85;
+      color: var(--ink-soft);
+      letter-spacing: .04em;
+      margin-bottom: 14px;
+    }
+    .btn-card p:last-child { margin-bottom: 0; }
+    .btn-card .hl {
+      color: var(--rose-deep);
+      font-weight: 500;
+      background: var(--spot);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    .volume-vis {
+      display: flex;
+      gap: 4px;
+      margin-top: 20px;
+      align-items: flex-end;
+    }
+    .volume-vis div {
+      flex: 1;
+      background: var(--bg-warm);
+      border-radius: 1px;
+      transition: background .3s;
+    }
+    .volume-vis div:nth-child(1) { height: 8px; }
+    .volume-vis div:nth-child(2) { height: 14px; }
+    .volume-vis div:nth-child(3) { height: 20px; }
+    .volume-vis div:nth-child(4) { height: 26px; }
+    .volume-vis div:nth-child(5) { height: 32px; }
+    .volume-vis div:nth-child(6) { height: 38px; }
+    .volume-vis div:nth-child(7) { height: 44px; }
+    .btn-card:hover .volume-vis div { background: var(--rose); }
+    .btn-card:hover .volume-vis div:nth-child(1) { background: var(--ink-faded); transition-delay: 0s; }
+    .btn-card:hover .volume-vis div:nth-child(2) { transition-delay: .05s; }
+    .btn-card:hover .volume-vis div:nth-child(3) { transition-delay: .1s; }
+    .btn-card:hover .volume-vis div:nth-child(4) { transition-delay: .15s; }
+    .btn-card:hover .volume-vis div:nth-child(5) { transition-delay: .2s; }
+    .btn-card:hover .volume-vis div:nth-child(6) { transition-delay: .25s; }
+    .btn-card:hover .volume-vis div:nth-child(7) { transition-delay: .3s; }
+
+    /* ─────────── note / lead-in ─────────── */
+    #note .note-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    @media (max-width: 800px) { #note .note-wrap { grid-template-columns: 1fr; gap: 40px; } }
+    .note-text p {
+      font-family: var(--sans-tc);
+      font-size: 16px;
+      line-height: 1.95;
+      color: var(--ink-soft);
+      letter-spacing: .05em;
+      margin-bottom: 18px;
+    }
+    .note-text strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .note-visual {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 38px;
+      box-shadow: var(--shadow-soft);
+    }
+    .ratio-row {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-bottom: 26px;
+    }
+    .ratio-row:last-child { margin-bottom: 0; }
+    .ratio-box {
+      background: var(--ink);
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ratio-box.in-916 { width: 60px; height: 106px; }
+    .ratio-box.in-169 { width: 106px; height: 60px; }
+    .ratio-box.out { background: var(--rose); }
+    .ratio-box.out.portrait { width: 62px; height: 106px; }
+    .ratio-box.out.landscape { width: 106px; height: 62px; }
+    .ratio-box::after {
+      content: attr(data-ratio);
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .15em;
+      color: var(--ink-faded);
+      white-space: nowrap;
+    }
+    .arrow {
+      color: var(--rose);
+      font-size: 24px;
+      font-family: var(--serif-en);
+    }
+    .ratio-label {
+      font-family: var(--serif-tc);
+      font-size: 13px;
+      color: var(--ink-soft);
+      letter-spacing: .1em;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px dashed var(--line);
+    }
+
+    /* ─────────── tool ─────────── */
+    #tool {
+      background: linear-gradient(180deg, transparent 0%, var(--bg-pink) 40%, var(--bg-pink) 70%, transparent 100%);
+    }
+    .tool-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 48px;
+      box-shadow: var(--shadow-warm);
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    @media (max-width: 700px) { .tool-card { padding: 32px 24px; } }
+
+    /* dropzone */
+    .dropzone {
+      border: 2px dashed var(--line);
+      border-radius: 6px;
+      padding: 64px 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      background: var(--bg);
+      position: relative;
+      display: block;
+      width: 100%;
+    }
+    .dropzone:hover, .dropzone.drag {
+      border-color: var(--rose);
+      background: var(--spot);
+      transform: translateY(-2px);
+    }
+    .dropzone .upload-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 22px;
+      color: var(--rose);
+    }
+    .dropzone h3 {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: .08em;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .dropzone p {
+      font-size: 14px;
+      color: var(--ink-soft);
+      letter-spacing: .06em;
+    }
+    .dropzone p .small {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--ink-faded);
+      font-family: var(--mono);
+      letter-spacing: .08em;
+    }
+    #file-input { display: none; }
+
+    /* preview */
+    .preview-area { display: none; margin-top: 30px; }
+    .preview-area.show { display: block; }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 700px) { .preview-grid { grid-template-columns: 1fr; } }
+    .preview-col {
+      text-align: center;
+    }
+    .preview-col .col-label {
+      font-family: var(--serif-en);
+      font-size: 11px;
+      letter-spacing: .4em;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .preview-col .col-meta {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 12px;
+      letter-spacing: .04em;
+    }
+    .preview-frame {
+      background: #050308;
+      border-radius: 4px;
+      overflow: hidden;
+      display: inline-block;
+      max-width: 100%;
+      position: relative;
+      box-shadow: 0 0 0 1px var(--line);
+    }
+    .preview-frame video {
+      display: block;
+      max-width: 100%;
+      max-height: 360px;
+      width: auto;
+      height: auto;
+    }
+    .preview-frame canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 360px;
+      width: auto;
+      height: auto;
+    }
+
+    .orient-banner {
+      margin-top: 28px;
+      padding: 16px 22px;
+      background: var(--bg-warm);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .orient-banner .info {
+      font-family: var(--serif-tc);
+      font-size: 14px;
+      color: var(--ink);
+      letter-spacing: .08em;
+    }
+    .orient-banner .info b {
+      color: var(--rose-deep);
+      font-weight: 700;
+    }
+    .toggle-btn {
+      background: transparent;
+      border: 1px solid var(--rose);
+      color: var(--rose);
+      padding: 7px 16px;
+      font-family: var(--sans-tc);
+      font-size: 13px;
+      letter-spacing: .12em;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .toggle-btn:hover {
+      background: var(--rose);
+      color: white;
+    }
+
+    .actions {
+      margin-top: 32px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--sans-tc);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: .15em;
+      border-radius: 3px;
+      transition: all .25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-primary {
+      background: var(--ink);
+      color: var(--bg);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--rose);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px -6px rgba(255, 61, 127, .5);
+    }
+    .btn-primary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+    }
+    .btn-secondary:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+    }
+    .btn-success {
+      background: var(--rose);
+      color: white;
+    }
+    .btn-success:hover {
+      background: var(--rose-deep);
+    }
+
+    /* progress */
+    .progress-area { display: none; margin-top: 28px; }
+    .progress-area.show { display: block; }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-warm);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--rose), var(--gold));
+      transition: width .2s ease;
+    }
+    .progress-text {
+      margin-top: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-soft);
+      letter-spacing: .08em;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: var(--spot);
+      border-radius: 4px;
+      font-family: var(--serif-tc);
+      font-size: 14px;
+      color: var(--rose-deep);
+      letter-spacing: .06em;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.error {
+      background: rgba(255, 80, 100, 0.12);
+      color: #FF8FA0;
+      border: 1px solid rgba(255, 80, 100, 0.3);
+    }
+
+    /* ─────────── footer ─────────── */
+    footer {
+      margin-top: 80px;
+      padding: 60px 32px 50px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+    }
+    .footer-mark {
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: .18em;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .footer-tag {
+      font-family: var(--serif-tc);
+      font-size: 13px;
+      letter-spacing: .25em;
+      color: var(--ink-soft);
+      margin-bottom: 28px;
+    }
+    .footer-meta {
+      font-family: var(--serif-en);
+      font-size: 11px;
+      letter-spacing: .35em;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+    }
+
+    /* ─────────── reveal animation ─────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .9s ease, transform .9s ease;
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- ─────── nav ─────── -->
+  <nav>
+    <div class="nav-inner">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        電子卡磚
+      </div>
+      <ul class="nav-links">
+        <li><a href="#intro">介紹</a></li>
+        <li><a href="#specs">規格</a></li>
+        <li><a href="#usage">使用方法</a></li>
+        <li><a href="#buttons">按鍵說明</a></li>
+        <li><a href="#tool">影片裁切</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ─────── hero ─────── -->
+  <header class="hero">
+    <div class="eyebrow">User Manual · 使用者說明書</div>
+    <h1>
+      電子卡磚
+      <span class="sub-en">Cardbrick · Electric Edition</span>
+    </h1>
+    <p class="tagline">
+      把舞台留在房間裡，<br />
+      讓<em>光芒</em>不散場。
+    </p>
+    <a href="#intro" class="scroll-hint">Begin <span>↓</span></a>
+
+    <div class="hero-mockup" aria-hidden="true">
+      <div class="mockup-brick">
+        <div class="mockup-screen">磚屬時刻</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─────── intro ─────── -->
+  <section id="intro" class="block">
+    <div class="section-num">01 · INTRODUCTION</div>
+    <h2 class="section-title">不只是卡磚，<br>這是一座 <span class="accent">stage</span> 專屬於粉絲的舞台。</h2>
+    <p class="section-sub">為每位追星族打造最有儀式感的日常陪伴裝置 —— 從晨間的第一眼，到睡前的最後一瞥，讓你的偶像無時無刻閃耀在你的身旁。</p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
+        </div>
+        <h3 class="feature-title">多格式支援</h3>
+        <p class="feature-desc">JPG、PNG、MP4 等皆可輕鬆播放，完美呈現偶像每一個眼神與動作。</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 12a8 8 0 0116 0"/><path d="M20 12a8 8 0 01-16 0"/><path d="M16 8l4-4M16 16l4 4M8 8L4 4M8 16l-4 4"/></svg>
+        </div>
+        <h3 class="feature-title">循環播放</h3>
+        <p class="feature-desc">打造你的磚屬時刻，二十四小時專屬舞台，光芒不間斷。</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>
+        </div>
+        <h3 class="feature-title">簡易操作</h3>
+        <p class="feature-desc">連接任意設備將檔案輕鬆上傳至卡磚，像移動檔案那樣直覺。</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z"/></svg>
+        </div>
+        <h3 class="feature-title">壓克力外觀</h3>
+        <p class="feature-desc">美觀百搭，可擺放於書桌、床邊、層架等多種場景，提升追星氛圍。</p>
+      </div>
+    </div>
+
+    <div class="closing-couplet">
+      <p>最適合想用偶像來布置房間的你，</p>
+      <p>和每天看到偶像就會充滿偶像的你。</p>
+    </div>
+  </section>
+
+  <!-- ─────── specs ─────── -->
+  <section id="specs" class="block">
+    <div class="section-num">02 · SPECIFICATIONS</div>
+    <h2 class="section-title"><span class="accent">規格</span>型號</h2>
+    <p class="section-sub">每一個細節都為了讓偶像的每一幀，都被認真地對待。</p>
+
+    <div class="specs-grid">
+      <table class="specs-table">
+        <tr><th>產品名稱</th><td>電子卡磚 / Cardbrick</td></tr>
+        <tr><th>顯示尺寸</th><td>7 吋</td></tr>
+        <tr><th>螢幕解析度（直式）</th><td>640 × 1024 px</td></tr>
+        <tr><th>螢幕解析度（橫式）</th><td>1024 × 640 px</td></tr>
+        <tr><th>電池容量</th><td>1500 mAh</td></tr>
+        <tr><th>儲存容量</th><td>4 GB</td></tr>
+        <tr><th>支援格式</th><td>
+          <span class="formats">
+            <span>JPG</span><span>PNG</span><span>MP4</span><span>MOV</span><span>AVI</span><span>WMV</span>
+          </span>
+        </td></tr>
+      </table>
+
+      <div class="specs-illustration">
+        <div class="label">Device Outline</div>
+        <svg class="device-svg" viewBox="0 0 200 280" fill="none" stroke="currentColor">
+          <defs>
+            <linearGradient id="screen-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2A1538"/>
+              <stop offset="100%" stop-color="#050308"/>
+            </linearGradient>
+            <radialGradient id="screen-glow" cx="0.35" cy="0.35" r="0.55">
+              <stop offset="0%" stop-color="#FF3D7F" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#FF3D7F" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect x="10" y="10" width="180" height="260" rx="14" stroke="#FF3D7F" stroke-opacity="0.4" stroke-width="1.2" fill="#14131F"/>
+          <rect x="24" y="24" width="152" height="232" rx="4" fill="url(#screen-grad)"/>
+          <rect x="24" y="24" width="152" height="232" rx="4" fill="url(#screen-glow)"/>
+          <text x="100" y="148" text-anchor="middle" font-family="Noto Serif TC" font-size="14" fill="#FFB3D1" letter-spacing="3">卡磚</text>
+          <!-- stand -->
+          <line x1="100" y1="270" x2="100" y2="278" stroke="#5EEAD4" stroke-opacity="0.5" stroke-width="1"/>
+          <ellipse cx="100" cy="278" rx="40" ry="3" fill="#2A2937"/>
+        </svg>
+        <div class="dim-row">
+          <div class="dim-item"><span class="num">7"</span><span class="lbl">Display</span></div>
+          <div class="dim-item"><span class="num">4 GB</span><span class="lbl">Storage</span></div>
+          <div class="dim-item"><span class="num">1500</span><span class="lbl">mAh</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────── usage ─────── -->
+  <section id="usage" class="block">
+    <div class="section-num">03 · HOW TO USE</div>
+    <h2 class="section-title">使用<span class="accent">方法</span></h2>
+    <p class="section-sub">三個步驟，把偶像放進你最常看見的地方。</p>
+
+    <div class="steps">
+      <div class="step">
+        <h3>連接卡磚</h3>
+        <p>將卡磚用隨盒附贈之傳輸線，連接至桌上型電腦或筆記型電腦。手機亦可，若不易找到對應接孔，請直接與客服聯絡。</p>
+      </div>
+      <div class="step">
+        <h3>放入檔案</h3>
+        <p>本機會新增一個磁碟機。將你的照片或影片直接拖曳放入該磁碟機資料夾中即可，就像處理一般 USB 隨身碟一樣直覺。</p>
+      </div>
+      <div class="step">
+        <h3>拔線開演</h3>
+        <p>檔案放入完成後，拔掉傳輸線，卡磚便會自動開始播放你所放入的影片或圖片。一座小小舞台，於是亮起。</p>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>小提醒　</strong>記得將透明壓克力棒插入背後的凹槽！讓它可以穩當地站立在桌上。
+    </div>
+  </section>
+
+  <!-- ─────── buttons ─────── -->
+  <section id="buttons" class="block">
+    <div class="section-num">04 · CONTROLS</div>
+    <h2 class="section-title">按鍵<span class="accent">說明</span></h2>
+    <p class="section-sub">產品背面（沒有螢幕的那一面）有兩顆按鈕與一個 Type-C 孔。</p>
+
+    <div class="btn-layout">
+      <!-- VOLUME -->
+      <div class="btn-card">
+        <span class="num">01</span>
+        <span class="pill">VOLUME</span>
+        <h3>音量 · 檔案切換</h3>
+        <p><strong>短按：</strong>調節音量。每按一下從目前數值 <span class="hl">+1</span>，依序到 6 之後再按一下會回到 <span class="hl">0</span>（靜音模式）。</p>
+        <p><strong>長按：</strong>進入檔案選擇介面。介面中短按可依序跳到下一個檔案；再次長按可開始 <span class="hl">循環播放</span> 該檔案。</p>
+        <div class="volume-vis" aria-hidden="true">
+          <div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+      </div>
+
+      <!-- ON/OFF -->
+      <div class="btn-card">
+        <span class="num">02</span>
+        <span class="pill">ON / OFF</span>
+        <h3>開關 · 重置</h3>
+        <p>卡磚的電源開關。螢幕暗著時按下即開啟；亮著時按下即關閉。</p>
+        <p><strong>重開機</strong> 即可還原檔案 <span class="hl">循環播放</span> 的模式。若不小心進入了某個檔案的循環，重啟卡磚就能回到全部循環。</p>
+      </div>
+
+      <!-- TYPE-C -->
+      <div class="btn-card">
+        <span class="num">03</span>
+        <span class="pill">CHARGE / CONNECT</span>
+        <h3>Type-C 接孔</h3>
+        <p>單純提供兩個用途：<span class="hl">充電</span> 與 <span class="hl">連接裝置</span>。</p>
+        <p>連接至電腦時會被識別為磁碟機，將檔案放入即可；連接至充電器時則為一般充電。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────── note (lead into tool) ─────── -->
+  <section id="note" class="block">
+    <div class="section-num">05 · ASPECT RATIO</div>
+    <h2 class="section-title">關於<span class="accent">影片比例</span></h2>
+    <p class="section-sub">下載到的影片，可能與卡磚原始設計的尺寸不太一樣。</p>
+
+    <div class="note-wrap">
+      <div class="note-text">
+        <p>大部分你們下載到影片的比例應該會是 <strong>9 : 16</strong> 或 <strong>16 : 9</strong>，跟卡磚原始設計的大小有誤差，會顯示黑邊 —— 有可能是左右、或者是上下。</p>
+        <p>下方有我們自己設計的線上影片裁切小工具，<strong>不會修改影片本身的比例，只會朝中間放大</strong>。雖然會損失一些畫面，但可以讓完整的照片和影片完美地顯示在卡磚上。</p>
+        <p>所有處理都在你的瀏覽器本機內完成，影片不會上傳到任何伺服器。</p>
+      </div>
+      <div class="note-visual">
+        <div class="ratio-row">
+          <div class="ratio-box in-916" data-ratio="9 : 16"></div>
+          <span class="arrow">→</span>
+          <div class="ratio-box out portrait" data-ratio="600 × 1024"></div>
+        </div>
+        <div class="ratio-row">
+          <div class="ratio-box in-169" data-ratio="16 : 9"></div>
+          <span class="arrow">→</span>
+          <div class="ratio-box out landscape" data-ratio="1024 × 600"></div>
+        </div>
+        <p class="ratio-label">自動判別直式或橫式，朝中心裁切至目標尺寸。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────── tool ─────── -->
+  <section id="tool" class="block">
+    <div class="section-num">06 · CROP TOOL</div>
+    <h2 class="section-title">影片<span class="accent">裁切工具</span></h2>
+    <p class="section-sub">上傳影片，自動判別方向，朝中央放大裁切至卡磚適用尺寸。</p>
+
+    <div class="tool-card">
+      <!-- Drop zone -->
+      <label class="dropzone" id="dropzone" for="file-input">
+        <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M24 32V8M14 18l10-10 10 10"/>
+          <path d="M8 32v6a2 2 0 002 2h28a2 2 0 002-2v-6"/>
+        </svg>
+        <h3>拖曳影片到這裡，或點擊選擇檔案</h3>
+        <p>
+          會自動判別直式 / 橫式並裁切至 600×1024 或 1024×600
+          <span class="small">SUPPORTED · MP4 · MOV · WEBM · AVI</span>
+        </p>
+        <input type="file" id="file-input" accept="video/*" />
+      </label>
+
+      <!-- Preview / output -->
+      <div class="preview-area" id="preview-area">
+        <div class="preview-grid">
+          <div class="preview-col">
+            <div class="col-label">Source</div>
+            <div class="preview-frame">
+              <video id="src-video" muted playsinline></video>
+            </div>
+            <div class="col-meta" id="src-meta">—</div>
+          </div>
+          <div class="preview-col">
+            <div class="col-label">Cropped Preview</div>
+            <div class="preview-frame">
+              <canvas id="preview-canvas"></canvas>
+            </div>
+            <div class="col-meta" id="dst-meta">—</div>
+          </div>
+        </div>
+
+        <div class="orient-banner">
+          <div class="info">偵測結果：<b id="orient-text">—</b>　·　輸出尺寸：<b id="target-text">—</b></div>
+          <button class="toggle-btn" id="toggle-orient" type="button">切換方向</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="process-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+            開始裁切
+          </button>
+          <button class="btn btn-secondary" id="reset-btn" type="button">重新選擇</button>
+          <a class="btn btn-success" id="download-link" style="display:none" download>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            下載裁切完成的影片
+          </a>
+        </div>
+
+        <div class="progress-area" id="progress-area">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="progress-text">
+            <span id="progress-label">處理中…</span>
+            <span id="progress-percent">0%</span>
+          </div>
+        </div>
+
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────── footer ─────── -->
+  <footer>
+    <div class="footer-mark">電子卡磚</div>
+    <div class="footer-tag">把舞台留在房間裡，讓光芒不散場。</div>
+    <div class="footer-meta">User Manual · Cardbrick · Electric Edition</div>
+  </footer>
+
+  <!-- ─────── scripts ─────── -->
+  <script>
+    /* ────── reveal on scroll ────── */
+    (function () {
+      const items = document.querySelectorAll('.block, .features, .closing-couplet, .steps, .tip, .btn-layout, .note-wrap, .tool-card');
+      items.forEach(el => el.classList.add('reveal'));
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: .12 });
+      items.forEach(el => io.observe(el));
+    })();
+
+    /* ────── video crop tool ────── */
+    (function () {
+      // dom
+      const dropzone     = document.getElementById('dropzone');
+      const fileInput    = document.getElementById('file-input');
+      const previewArea  = document.getElementById('preview-area');
+      const srcVideo     = document.getElementById('src-video');
+      const previewCanvas= document.getElementById('preview-canvas');
+      const srcMeta      = document.getElementById('src-meta');
+      const dstMeta      = document.getElementById('dst-meta');
+      const orientText   = document.getElementById('orient-text');
+      const targetText   = document.getElementById('target-text');
+      const toggleBtn    = document.getElementById('toggle-orient');
+      const processBtn   = document.getElementById('process-btn');
+      const resetBtn     = document.getElementById('reset-btn');
+      const downloadLink = document.getElementById('download-link');
+      const progressArea = document.getElementById('progress-area');
+      const progressFill = document.getElementById('progress-fill');
+      const progressLabel= document.getElementById('progress-label');
+      const progressPct  = document.getElementById('progress-percent');
+      const statusEl     = document.getElementById('status');
+
+      // state
+      let currentFile = null;
+      let isPortrait = true; // detected/overridden orientation
+      let lastOutputUrl = null;
+
+      // ── helpers ──
+      const fmt = n => n.toLocaleString();
+      const showStatus = (msg, isError) => {
+        statusEl.textContent = msg;
+        statusEl.className = 'status show' + (isError ? ' error' : '');
+      };
+      const hideStatus = () => { statusEl.className = 'status'; };
+      const setProgress = (pct, label) => {
+        progressArea.classList.add('show');
+        progressFill.style.width = pct + '%';
+        progressPct.textContent  = Math.round(pct) + '%';
+        if (label) progressLabel.textContent = label;
+      };
+      const resetProgress = () => {
+        progressArea.classList.remove('show');
+        progressFill.style.width = '0%';
+        progressPct.textContent = '0%';
+      };
+
+      // ── drop / file handling ──
+      ['dragenter', 'dragover'].forEach(ev =>
+        dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); })
+      );
+      ['dragleave', 'drop'].forEach(ev =>
+        dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('drag'); })
+      );
+      dropzone.addEventListener('drop', e => {
+        const f = e.dataTransfer.files[0];
+        if (f) handleFile(f);
+      });
+      fileInput.addEventListener('change', e => {
+        const f = e.target.files[0];
+        if (f) handleFile(f);
+      });
+
+      function handleFile(file) {
+        if (!file.type.startsWith('video/')) {
+          showStatus('請選擇影片檔案。', true);
+          return;
+        }
+        hideStatus();
+        resetProgress();
+        downloadLink.style.display = 'none';
+        if (lastOutputUrl) { URL.revokeObjectURL(lastOutputUrl); lastOutputUrl = null; }
+
+        currentFile = file;
+        const url = URL.createObjectURL(file);
+        srcVideo.src = url;
+
+        srcVideo.onloadedmetadata = () => {
+          // determine orientation
+          isPortrait = srcVideo.videoHeight >= srcVideo.videoWidth;
+          updatePreview();
+          previewArea.classList.add('show');
+          srcMeta.textContent = `${srcVideo.videoWidth} × ${srcVideo.videoHeight} · ${formatDuration(srcVideo.duration)}`;
+        };
+      }
+
+      function formatDuration(s) {
+        if (!isFinite(s)) return '—';
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return `${m}:${String(sec).padStart(2, '0')}`;
+      }
+
+      // draw a single preview frame to the canvas (uses currentTime ≈ 1s for a poster look)
+      function updatePreview() {
+        const tw = isPortrait ? 600 : 1024;
+        const th = isPortrait ? 1024 : 600;
+        previewCanvas.width = tw;
+        previewCanvas.height = th;
+
+        orientText.textContent = isPortrait ? '直式（Portrait）' : '橫式（Landscape）';
+        targetText.textContent = `${tw} × ${th}`;
+        dstMeta.textContent    = `${tw} × ${th}`;
+
+        // when source has a frame ready, draw it
+        const draw = () => {
+          const ctx = previewCanvas.getContext('2d');
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, tw, th);
+          drawCovered(ctx, srcVideo, tw, th);
+        };
+
+        // try to seek to ~1s to grab a representative frame
+        if (srcVideo.readyState >= 2) {
+          const targetT = Math.min(1, srcVideo.duration / 4);
+          if (Math.abs(srcVideo.currentTime - targetT) > 0.1) {
+            srcVideo.currentTime = targetT;
+            srcVideo.onseeked = () => { draw(); srcVideo.onseeked = null; };
+          } else {
+            draw();
+          }
+        } else {
+          srcVideo.addEventListener('loadeddata', draw, { once: true });
+        }
+      }
+
+      // center-crop "cover" draw — scale up so target canvas is fully filled
+      function drawCovered(ctx, src, tw, th) {
+        const sw = src.videoWidth || src.naturalWidth;
+        const sh = src.videoHeight || src.naturalHeight;
+        if (!sw || !sh) return;
+        const scale = Math.max(tw / sw, th / sh);
+        const dw = sw * scale;
+        const dh = sh * scale;
+        const dx = (tw - dw) / 2;
+        const dy = (th - dh) / 2;
+        ctx.drawImage(src, dx, dy, dw, dh);
+      }
+
+      // toggle orientation manually
+      toggleBtn.addEventListener('click', () => {
+        isPortrait = !isPortrait;
+        updatePreview();
+      });
+
+      // reset
+      resetBtn.addEventListener('click', () => {
+        currentFile = null;
+        srcVideo.removeAttribute('src');
+        srcVideo.load();
+        previewArea.classList.remove('show');
+        downloadLink.style.display = 'none';
+        fileInput.value = '';
+        resetProgress();
+        hideStatus();
+        if (lastOutputUrl) { URL.revokeObjectURL(lastOutputUrl); lastOutputUrl = null; }
+      });
+
+      // ── core: render cropped video ──
+      processBtn.addEventListener('click', async () => {
+        if (!currentFile) return;
+        processBtn.disabled = true;
+        resetBtn.disabled   = true;
+        toggleBtn.disabled  = true;
+        downloadLink.style.display = 'none';
+        hideStatus();
+
+        try {
+          const blob = await cropVideoToBlob(srcVideo, isPortrait);
+          const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+          const baseName = (currentFile.name || 'video').replace(/\.[^.]+$/, '');
+          const outName = `${baseName}_cardbrick_${isPortrait ? '600x1024' : '1024x600'}.${ext}`;
+
+          if (lastOutputUrl) URL.revokeObjectURL(lastOutputUrl);
+          lastOutputUrl = URL.createObjectURL(blob);
+          downloadLink.href = lastOutputUrl;
+          downloadLink.download = outName;
+          downloadLink.style.display = 'inline-flex';
+
+          setProgress(100, '完成 · Done');
+          showStatus(`裁切完成！檔案大小 ${(blob.size / 1024 / 1024).toFixed(2)} MB · 格式 ${ext.toUpperCase()}。${ext === 'webm' ? '（此瀏覽器僅支援 WebM 輸出。若卡磚不支援 WebM，可使用 HandBrake 等工具轉成 MP4。）' : ''}`);
+        } catch (err) {
+          console.error(err);
+          showStatus('裁切失敗：' + (err.message || err), true);
+          resetProgress();
+        } finally {
+          processBtn.disabled = false;
+          resetBtn.disabled   = false;
+          toggleBtn.disabled  = false;
+        }
+      });
+
+      /**
+       * Crop a video to target dimensions using canvas + MediaRecorder.
+       * Returns a Blob of the recorded output.
+       */
+      async function cropVideoToBlob(video, portrait) {
+        const tw = portrait ? 600 : 1024;
+        const th = portrait ? 1024 : 600;
+
+        // setup hidden processing canvas
+        const canvas = document.createElement('canvas');
+        canvas.width  = tw;
+        canvas.height = th;
+        const ctx = canvas.getContext('2d');
+
+        // pick the best supported MIME type
+        const candidates = [
+          'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm'
+        ];
+        const mimeType = candidates.find(t =>
+          typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)
+        );
+        if (!mimeType) throw new Error('此瀏覽器不支援錄影輸出。');
+
+        // build the output stream: video from canvas + audio from original
+        const fps = 30;
+        const canvasStream = canvas.captureStream(fps);
+
+        // capture audio track from the source video element
+        // some browsers expose captureStream / mozCaptureStream
+        let audioTrack = null;
+        try {
+          const srcStream = (video.captureStream || video.mozCaptureStream)?.call(video);
+          if (srcStream) {
+            const tracks = srcStream.getAudioTracks();
+            if (tracks.length) audioTrack = tracks[0];
+          }
+        } catch (e) { /* no audio, that's fine */ }
+
+        const outStream = new MediaStream();
+        canvasStream.getVideoTracks().forEach(t => outStream.addTrack(t));
+        if (audioTrack) outStream.addTrack(audioTrack);
+
+        const chunks = [];
+        const recorder = new MediaRecorder(outStream, { mimeType, videoBitsPerSecond: 4_000_000 });
+        recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+
+        const recDone = new Promise((resolve, reject) => {
+          recorder.onstop  = () => resolve(new Blob(chunks, { type: mimeType }));
+          recorder.onerror = e => reject(e.error || new Error('MediaRecorder error'));
+        });
+
+        // play the source from the beginning, muted is OK because we already pulled the audio track
+        video.currentTime = 0;
+        video.muted = true;
+        await new Promise(res => {
+          const onSeeked = () => { video.removeEventListener('seeked', onSeeked); res(); };
+          video.addEventListener('seeked', onSeeked);
+          // some browsers don't fire seeked when currentTime already === 0
+          setTimeout(() => res(), 200);
+        });
+
+        setProgress(2, '開始錄製…');
+        recorder.start(100);
+        const playPromise = video.play();
+        if (playPromise) await playPromise.catch(() => {});
+
+        // drawing loop
+        let stopped = false;
+        const duration = isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+
+        const drawLoop = () => {
+          if (stopped) return;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, tw, th);
+          drawCovered(ctx, video, tw, th);
+
+          if (duration) {
+            const pct = Math.min(99, (video.currentTime / duration) * 100);
+            setProgress(pct, `處理中… ${video.currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`);
+          }
+          requestAnimationFrame(drawLoop);
+        };
+        requestAnimationFrame(drawLoop);
+
+        // wait for video to finish
+        await new Promise((resolve) => {
+          const onEnded = () => { video.removeEventListener('ended', onEnded); resolve(); };
+          video.addEventListener('ended', onEnded);
+        });
+
+        stopped = true;
+        // small tail to flush the last frame
+        await new Promise(r => setTimeout(r, 120));
+        recorder.stop();
+
+        const blob = await recDone;
+        // cleanup
+        canvasStream.getTracks().forEach(t => t.stop());
+        return blob;
+      }
+    })();
+  </script>
+</body>
+</html>

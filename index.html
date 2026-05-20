@@ -711,6 +711,58 @@
     }
     @media (max-width: 700px) { .tool-card { padding: 32px 24px; } }
 
+    /* model selector */
+    .model-selector { margin-bottom: 28px; }
+    .model-label {
+      font-family: var(--serif-en);
+      font-size: 11px;
+      letter-spacing: .4em;
+      color: var(--ink-faded);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .model-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 500px) { .model-options { grid-template-columns: 1fr; } }
+    .model-btn {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 18px 22px;
+      cursor: pointer;
+      transition: all .25s;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--ink-soft);
+    }
+    .model-btn:hover {
+      border-color: var(--rose-deep);
+      color: var(--ink);
+    }
+    .model-btn.active {
+      border-color: var(--rose);
+      background: var(--spot);
+      color: var(--ink);
+      box-shadow: 0 0 0 1px var(--rose) inset;
+    }
+    .model-btn .model-num {
+      font-family: var(--serif-tc);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .14em;
+    }
+    .model-btn.active .model-num { color: var(--rose); }
+    .model-btn .model-dim {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .04em;
+    }
+
     /* dropzone */
     .dropzone {
       border: 2px dashed var(--line);
@@ -1215,6 +1267,21 @@
     <p class="section-sub">上傳影片，自動判別方向，朝中央放大裁切至卡磚適用尺寸。</p>
 
     <div class="tool-card">
+      <!-- Model selector -->
+      <div class="model-selector">
+        <div class="model-label">Cardbrick Model · 卡磚型號</div>
+        <div class="model-options" role="radiogroup" aria-label="卡磚型號">
+          <button class="model-btn active" data-model="1" type="button" role="radio" aria-checked="true">
+            <span class="model-num">選項一</span>
+            <span class="model-dim">600 × 1024 / 1024 × 600</span>
+          </button>
+          <button class="model-btn" data-model="2" type="button" role="radio" aria-checked="false">
+            <span class="model-num">選項二</span>
+            <span class="model-dim">640 × 1024 / 1024 × 640</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Drop zone -->
       <label class="dropzone" id="dropzone" for="file-input">
         <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -1223,7 +1290,7 @@
         </svg>
         <h3>拖曳影片到這裡，或點擊選擇檔案</h3>
         <p>
-          會自動判別直式 / 橫式並裁切至 600×1024 或 1024×600
+          會自動判別直式 / 橫式並裁切至 <span id="dropzone-dims">600×1024 或 1024×600</span>
           <span class="small">SUPPORTED · MP4 · MOV · WEBM · AVI</span>
         </p>
         <input type="file" id="file-input" accept="video/*" />
@@ -1318,11 +1385,45 @@
       const progressLabel= document.getElementById('progress-label');
       const progressPct  = document.getElementById('progress-percent');
       const statusEl     = document.getElementById('status');
+      const modelBtns    = document.querySelectorAll('.model-btn');
+      const dropzoneDims = document.getElementById('dropzone-dims');
+
+      // models: portrait dimensions (width × height); landscape is the swap
+      const MODELS = {
+        '1': { pw: 600, ph: 1024 },
+        '2': { pw: 640, ph: 1024 }
+      };
 
       // state
       let currentFile = null;
       let isPortrait = true; // detected/overridden orientation
+      let currentModel = '1';
       let lastOutputUrl = null;
+
+      // current target dimensions based on model + orientation
+      function targetDims() {
+        const m = MODELS[currentModel];
+        return isPortrait
+          ? { w: m.pw, h: m.ph }
+          : { w: m.ph, h: m.pw };
+      }
+
+      // model selector
+      modelBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const m = btn.dataset.model;
+          if (m === currentModel) return;
+          currentModel = m;
+          modelBtns.forEach(b => {
+            const active = b.dataset.model === currentModel;
+            b.classList.toggle('active', active);
+            b.setAttribute('aria-checked', active ? 'true' : 'false');
+          });
+          const md = MODELS[currentModel];
+          dropzoneDims.textContent = `${md.pw}×${md.ph} 或 ${md.ph}×${md.pw}`;
+          if (previewArea.classList.contains('show')) updatePreview();
+        });
+      });
 
       // ── helpers ──
       const fmt = n => n.toLocaleString();
@@ -1391,8 +1492,7 @@
 
       // draw a single preview frame to the canvas (uses currentTime ≈ 1s for a poster look)
       function updatePreview() {
-        const tw = isPortrait ? 600 : 1024;
-        const th = isPortrait ? 1024 : 600;
+        const { w: tw, h: th } = targetDims();
         previewCanvas.width = tw;
         previewCanvas.height = th;
 
@@ -1464,10 +1564,11 @@
         hideStatus();
 
         try {
-          const blob = await cropVideoToBlob(srcVideo, isPortrait);
+          const { w: tw, h: th } = targetDims();
+          const blob = await cropVideoToBlob(srcVideo, tw, th);
           const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
           const baseName = (currentFile.name || 'video').replace(/\.[^.]+$/, '');
-          const outName = `${baseName}_cardbrick_${isPortrait ? '600x1024' : '1024x600'}.${ext}`;
+          const outName = `${baseName}_cardbrick_${tw}x${th}.${ext}`;
 
           if (lastOutputUrl) URL.revokeObjectURL(lastOutputUrl);
           lastOutputUrl = URL.createObjectURL(blob);
@@ -1492,10 +1593,7 @@
        * Crop a video to target dimensions using canvas + MediaRecorder.
        * Returns a Blob of the recorded output.
        */
-      async function cropVideoToBlob(video, portrait) {
-        const tw = portrait ? 600 : 1024;
-        const th = portrait ? 1024 : 600;
-
+      async function cropVideoToBlob(video, tw, th) {
         // setup hidden processing canvas
         const canvas = document.createElement('canvas');
         canvas.width  = tw;

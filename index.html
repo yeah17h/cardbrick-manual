@@ -1626,9 +1626,13 @@
           ffmpegFetchFile = fetchFile;
 
           progressLabel.textContent = '初始化引擎…';
+          // Use the single-thread core (-st). The default @ffmpeg/core@0.11.x
+          // is multi-threaded and needs SharedArrayBuffer, which requires
+          // cross-origin isolation headers (COOP/COEP) — GitHub Pages can't
+          // set those. -st is single-threaded and runs anywhere.
           const ffmpeg = createFFmpeg({
             log: false,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
             progress: ({ ratio }) => {
               const pct = Math.min(99, Math.max(3, ratio * 100));
               setProgress(pct, `轉碼中… ${pct.toFixed(0)}%`);

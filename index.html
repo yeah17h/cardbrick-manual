@@ -1565,10 +1565,9 @@
 
         try {
           const { w: tw, h: th } = targetDims();
-          const blob = await cropVideoToBlob(srcVideo, tw, th);
-          const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+          const blob = await cropVideoToBlob(currentFile, tw, th);
           const baseName = (currentFile.name || 'video').replace(/\.[^.]+$/, '');
-          const outName = `${baseName}_cardbrick_${tw}x${th}.${ext}`;
+          const outName = `${baseName}_cardbrick_${tw}x${th}.mp4`;
 
           if (lastOutputUrl) URL.revokeObjectURL(lastOutputUrl);
           lastOutputUrl = URL.createObjectURL(blob);
@@ -1577,7 +1576,7 @@
           downloadLink.style.display = 'inline-flex';
 
           setProgress(100, '完成 · Done');
-          showStatus(`裁切完成！檔案大小 ${(blob.size / 1024 / 1024).toFixed(2)} MB · 格式 ${ext.toUpperCase()}。${ext === 'webm' ? '（此瀏覽器僅支援 WebM 輸出。若卡磚不支援 WebM，可使用 HandBrake 等工具轉成 MP4。）' : ''}`);
+          showStatus(`裁切完成！檔案大小 ${(blob.size / 1024 / 1024).toFixed(2)} MB · 標準 MP4（H.264 Baseline + AAC，已加 faststart），可直接放入卡磚播放。`);
         } catch (err) {
           console.error(err);
           showStatus('裁切失敗：' + (err.message || err), true);
@@ -1589,109 +1588,112 @@
         }
       });
 
+      // ── FFmpeg.wasm lazy loader ──
+      // Loaded from CDN on first use. Single-thread build (no SharedArrayBuffer needed).
+      let ffmpegLoadPromise = null;
+      let ffmpegUtil = null;
+
+      function getFFmpeg() {
+        if (ffmpegLoadPromise) return ffmpegLoadPromise;
+        ffmpegLoadPromise = (async () => {
+          showStatus('首次使用需從 CDN 載入轉碼引擎（約 30MB），請耐心稍候，之後同分頁就會直接使用快取。');
+          progressArea.classList.add('show');
+          progressLabel.textContent = '載入轉碼引擎…';
+          progressPct.textContent = '...';
+          progressFill.style.width = '8%';
+
+          const [ffmpegMod, util] = await Promise.all([
+            import('https://esm.sh/@ffmpeg/ffmpeg@0.12.10'),
+            import('https://esm.sh/@ffmpeg/util@0.12.1'),
+          ]);
+          ffmpegUtil = util;
+          progressFill.style.width = '28%';
+
+          const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+          const ffmpeg = new ffmpegMod.FFmpeg();
+          ffmpeg.on('log', ({ message }) => console.log('[ffmpeg]', message));
+
+          progressLabel.textContent = '下載核心模組…';
+          const coreURL = await util.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+          progressFill.style.width = '52%';
+
+          progressLabel.textContent = '下載 WASM…';
+          const wasmURL = await util.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+          progressFill.style.width = '84%';
+
+          progressLabel.textContent = '初始化引擎…';
+          await ffmpeg.load({ coreURL, wasmURL });
+          progressFill.style.width = '100%';
+
+          hideStatus();
+          return ffmpeg;
+        })().catch(err => {
+          // allow retry on next click
+          ffmpegLoadPromise = null;
+          throw new Error('載入轉碼引擎失敗，請確認網路連線後重試。' + (err && err.message ? '（' + err.message + '）' : ''));
+        });
+        return ffmpegLoadPromise;
+      }
+
       /**
-       * Crop a video to target dimensions using canvas + MediaRecorder.
-       * Returns a Blob of the recorded output.
+       * Crop a video to target dimensions using FFmpeg.wasm.
+       * Outputs a standard (non-fragmented) MP4 with H.264 Baseline + AAC LC,
+       * yuv420p, CFR 30 fps, and faststart — the most compatible profile for
+       * embedded players like the cardbrick.
        */
-      async function cropVideoToBlob(video, tw, th) {
-        // setup hidden processing canvas
-        const canvas = document.createElement('canvas');
-        canvas.width  = tw;
-        canvas.height = th;
-        const ctx = canvas.getContext('2d');
+      async function cropVideoToBlob(file, tw, th) {
+        const ffmpeg = await getFFmpeg();
+        const { fetchFile } = ffmpegUtil;
 
-        // pick the best supported MIME type
-        const candidates = [
-          'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-          'video/mp4;codecs=avc1',
-          'video/mp4',
-          'video/webm;codecs=vp9,opus',
-          'video/webm;codecs=vp8,opus',
-          'video/webm'
-        ];
-        const mimeType = candidates.find(t =>
-          typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)
-        );
-        if (!mimeType) throw new Error('此瀏覽器不支援錄影輸出。');
+        const extMatch = file.name && file.name.match(/\.[^.]+$/);
+        const inputName = 'input' + (extMatch ? extMatch[0].toLowerCase() : '.mp4');
+        const outputName = 'output.mp4';
 
-        // build the output stream: video from canvas + audio from original
-        const fps = 30;
-        const canvasStream = canvas.captureStream(fps);
+        setProgress(2, '寫入檔案…');
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-        // capture audio track from the source video element
-        // some browsers expose captureStream / mozCaptureStream
-        let audioTrack = null;
-        try {
-          const srcStream = (video.captureStream || video.mozCaptureStream)?.call(video);
-          if (srcStream) {
-            const tracks = srcStream.getAudioTracks();
-            if (tracks.length) audioTrack = tracks[0];
-          }
-        } catch (e) { /* no audio, that's fine */ }
-
-        const outStream = new MediaStream();
-        canvasStream.getVideoTracks().forEach(t => outStream.addTrack(t));
-        if (audioTrack) outStream.addTrack(audioTrack);
-
-        const chunks = [];
-        const recorder = new MediaRecorder(outStream, { mimeType, videoBitsPerSecond: 4_000_000 });
-        recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-
-        const recDone = new Promise((resolve, reject) => {
-          recorder.onstop  = () => resolve(new Blob(chunks, { type: mimeType }));
-          recorder.onerror = e => reject(e.error || new Error('MediaRecorder error'));
-        });
-
-        // play the source from the beginning, muted is OK because we already pulled the audio track
-        video.currentTime = 0;
-        video.muted = true;
-        await new Promise(res => {
-          const onSeeked = () => { video.removeEventListener('seeked', onSeeked); res(); };
-          video.addEventListener('seeked', onSeeked);
-          // some browsers don't fire seeked when currentTime already === 0
-          setTimeout(() => res(), 200);
-        });
-
-        setProgress(2, '開始錄製…');
-        recorder.start(100);
-        const playPromise = video.play();
-        if (playPromise) await playPromise.catch(() => {});
-
-        // drawing loop
-        let stopped = false;
-        const duration = isFinite(video.duration) && video.duration > 0 ? video.duration : null;
-
-        const drawLoop = () => {
-          if (stopped) return;
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0, 0, tw, th);
-          drawCovered(ctx, video, tw, th);
-
-          if (duration) {
-            const pct = Math.min(99, (video.currentTime / duration) * 100);
-            setProgress(pct, `處理中… ${video.currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`);
-          }
-          requestAnimationFrame(drawLoop);
+        const progressHandler = ({ progress }) => {
+          const pct = Math.min(99, Math.max(3, progress * 100));
+          setProgress(pct, `轉碼中… ${pct.toFixed(0)}%`);
         };
-        requestAnimationFrame(drawLoop);
+        ffmpeg.on('progress', progressHandler);
 
-        // wait for video to finish
-        await new Promise((resolve) => {
-          const onEnded = () => { video.removeEventListener('ended', onEnded); resolve(); };
-          video.addEventListener('ended', onEnded);
-        });
+        try {
+          setProgress(3, '轉碼中…');
+          // scale="cover" + center-crop, force square pixels, CFR 30fps,
+          // H.264 baseline level 3.1 + AAC, yuv420p, faststart.
+          await ffmpeg.exec([
+            '-i', inputName,
+            '-map', '0:v:0',
+            '-map', '0:a:0?',
+            '-vf', `scale=${tw}:${th}:force_original_aspect_ratio=increase,crop=${tw}:${th},setsar=1`,
+            '-r', '30',
+            '-c:v', 'libx264',
+            '-profile:v', 'baseline',
+            '-level', '3.1',
+            '-pix_fmt', 'yuv420p',
+            '-preset', 'ultrafast',
+            '-crf', '23',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-ar', '44100',
+            '-ac', '2',
+            '-movflags', '+faststart',
+            '-y',
+            outputName,
+          ]);
+        } finally {
+          ffmpeg.off('progress', progressHandler);
+        }
 
-        stopped = true;
-        // small tail to flush the last frame
-        await new Promise(r => setTimeout(r, 120));
-        recorder.stop();
+        const data = await ffmpeg.readFile(outputName);
+        try { await ffmpeg.deleteFile(inputName); } catch (e) { /* ignore */ }
+        try { await ffmpeg.deleteFile(outputName); } catch (e) { /* ignore */ }
 
-        const blob = await recDone;
-        // cleanup
-        canvasStream.getTracks().forEach(t => t.stop());
-        return blob;
+        return new Blob([data.buffer], { type: 'video/mp4' });
       }
     })();
   </script>
 </body>
 </html>
+

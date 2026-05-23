@@ -6,6 +6,14 @@
   <meta name="description" content="電子卡磚 · 使用者說明書 — 把舞台留在房間裡，讓光芒不散場。" />
   <title>電子卡磚 · 使用者說明書</title>
 
+  <!--
+    Cross-Origin Isolation service worker — required so SharedArrayBuffer
+    is available (FFmpeg.wasm 0.11.x multi-thread core needs it). GitHub
+    Pages can't send COOP/COEP headers, so the SW intercepts responses
+    and injects them. First visit silently reloads once.
+  -->
+  <script src="./coi-serviceworker.js"></script>
+
   <!-- Preconnect & fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1626,13 +1634,16 @@
           ffmpegFetchFile = fetchFile;
 
           progressLabel.textContent = '初始化引擎…';
-          // Use the single-thread core (-st). The default @ffmpeg/core@0.11.x
-          // is multi-threaded and needs SharedArrayBuffer, which requires
-          // cross-origin isolation headers (COOP/COEP) — GitHub Pages can't
-          // set those. -st is single-threaded and runs anywhere.
+          // The MT core requires SharedArrayBuffer, which requires cross-
+          // origin isolation (COOP + COEP). Those headers are injected by
+          // ./coi-serviceworker.js loaded at the top of the page — the SW
+          // forces a one-time reload on first visit so the page is COI by
+          // the time we get here. @ffmpeg/ffmpeg 0.11.x is hardcoded to
+          // call proxy_main, which only exists in the MT core, so the
+          // single-thread @ffmpeg/core-st isn't a usable substitute.
           const ffmpeg = createFFmpeg({
             log: false,
-            corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
             progress: ({ ratio }) => {
               const pct = Math.min(99, Math.max(3, ratio * 100));
               setProgress(pct, `轉碼中… ${pct.toFixed(0)}%`);

@@ -1588,10 +1588,27 @@
         }
       });
 
-      // ── FFmpeg.wasm lazy loader ──
-      // Loaded from CDN on first use. Single-thread build (no SharedArrayBuffer needed).
+      // ── FFmpeg.wasm lazy loader (0.11.x) ──
+      // We deliberately use 0.11.x, not 0.12.x. The 0.12.x line creates
+      // a cross-origin module worker, which Chrome refuses to construct
+      // even when the CDN returns CORS headers ("Script at ... cannot
+      // be accessed from origin ..."). 0.11.x instead builds the worker
+      // as a same-origin blob URL whose body just does `importScripts(
+      // corePath)` — and importScripts IS allowed cross-origin with CORS,
+      // which is the reliable path for static-site deploys.
       let ffmpegLoadPromise = null;
-      let ffmpegUtil = null;
+      let ffmpegFetchFile = null;
+
+      function loadScriptOnce(url) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = url;
+          s.crossOrigin = 'anonymous';
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error(`載入 ${url} 失敗`));
+          document.head.appendChild(s);
+        });
+      }
 
       function getFFmpeg() {
         if (ffmpegLoadPromise) return ffmpegLoadPromise;
@@ -1600,35 +1617,26 @@
           progressArea.classList.add('show');
           progressLabel.textContent = '載入轉碼引擎…';
           progressPct.textContent = '...';
-          progressFill.style.width = '8%';
+          progressFill.style.width = '15%';
 
-          // Load the FFmpeg ESM from unpkg (not esm.sh): esm.sh bundles the
-          // module so the internal `new URL('./worker.js', import.meta.url)`
-          // can't resolve to a real worker file, causing "worker.js cannot
-          // be accessed". Direct unpkg ESM preserves the file layout, and
-          // unpkg sets CORS headers so the cross-origin module worker loads
-          // cleanly.
-          const [ffmpegMod, util] = await Promise.all([
-            import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js'),
-            import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js'),
-          ]);
-          ffmpegUtil = util;
-          progressFill.style.width = '28%';
+          await loadScriptOnce('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+          progressFill.style.width = '40%';
 
-          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-          const ffmpeg = new ffmpegMod.FFmpeg();
-          ffmpeg.on('log', ({ message }) => console.log('[ffmpeg]', message));
-
-          progressLabel.textContent = '下載核心模組…';
-          const coreURL = await util.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
-          progressFill.style.width = '52%';
-
-          progressLabel.textContent = '下載 WASM…';
-          const wasmURL = await util.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
-          progressFill.style.width = '84%';
+          const { createFFmpeg, fetchFile } = window.FFmpeg;
+          ffmpegFetchFile = fetchFile;
 
           progressLabel.textContent = '初始化引擎…';
-          await ffmpeg.load({ coreURL, wasmURL });
+          const ffmpeg = createFFmpeg({
+            log: false,
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            progress: ({ ratio }) => {
+              const pct = Math.min(99, Math.max(3, ratio * 100));
+              setProgress(pct, `轉碼中… ${pct.toFixed(0)}%`);
+            },
+          });
+          progressFill.style.width = '60%';
+
+          await ffmpeg.load();
           progressFill.style.width = '100%';
 
           hideStatus();
@@ -1642,59 +1650,48 @@
       }
 
       /**
-       * Crop a video to target dimensions using FFmpeg.wasm.
+       * Crop a video to target dimensions using FFmpeg.wasm (0.11.x API).
        * Outputs a standard (non-fragmented) MP4 with H.264 Baseline + AAC LC,
        * yuv420p, CFR 30 fps, and faststart — the most compatible profile for
        * embedded players like the cardbrick.
        */
       async function cropVideoToBlob(file, tw, th) {
         const ffmpeg = await getFFmpeg();
-        const { fetchFile } = ffmpegUtil;
 
         const extMatch = file.name && file.name.match(/\.[^.]+$/);
         const inputName = 'input' + (extMatch ? extMatch[0].toLowerCase() : '.mp4');
         const outputName = 'output.mp4';
 
         setProgress(2, '寫入檔案…');
-        await ffmpeg.writeFile(inputName, await fetchFile(file));
+        ffmpeg.FS('writeFile', inputName, await ffmpegFetchFile(file));
 
-        const progressHandler = ({ progress }) => {
-          const pct = Math.min(99, Math.max(3, progress * 100));
-          setProgress(pct, `轉碼中… ${pct.toFixed(0)}%`);
-        };
-        ffmpeg.on('progress', progressHandler);
+        setProgress(3, '轉碼中…');
+        // scale="cover" + center-crop, force square pixels, CFR 30fps,
+        // H.264 baseline level 3.1 + AAC, yuv420p, faststart.
+        await ffmpeg.run(
+          '-i', inputName,
+          '-map', '0:v:0',
+          '-map', '0:a:0?',
+          '-vf', `scale=${tw}:${th}:force_original_aspect_ratio=increase,crop=${tw}:${th},setsar=1`,
+          '-r', '30',
+          '-c:v', 'libx264',
+          '-profile:v', 'baseline',
+          '-level', '3.1',
+          '-pix_fmt', 'yuv420p',
+          '-preset', 'ultrafast',
+          '-crf', '23',
+          '-c:a', 'aac',
+          '-b:a', '128k',
+          '-ar', '44100',
+          '-ac', '2',
+          '-movflags', '+faststart',
+          '-y',
+          outputName,
+        );
 
-        try {
-          setProgress(3, '轉碼中…');
-          // scale="cover" + center-crop, force square pixels, CFR 30fps,
-          // H.264 baseline level 3.1 + AAC, yuv420p, faststart.
-          await ffmpeg.exec([
-            '-i', inputName,
-            '-map', '0:v:0',
-            '-map', '0:a:0?',
-            '-vf', `scale=${tw}:${th}:force_original_aspect_ratio=increase,crop=${tw}:${th},setsar=1`,
-            '-r', '30',
-            '-c:v', 'libx264',
-            '-profile:v', 'baseline',
-            '-level', '3.1',
-            '-pix_fmt', 'yuv420p',
-            '-preset', 'ultrafast',
-            '-crf', '23',
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-ar', '44100',
-            '-ac', '2',
-            '-movflags', '+faststart',
-            '-y',
-            outputName,
-          ]);
-        } finally {
-          ffmpeg.off('progress', progressHandler);
-        }
-
-        const data = await ffmpeg.readFile(outputName);
-        try { await ffmpeg.deleteFile(inputName); } catch (e) { /* ignore */ }
-        try { await ffmpeg.deleteFile(outputName); } catch (e) { /* ignore */ }
+        const data = ffmpeg.FS('readFile', outputName);
+        try { ffmpeg.FS('unlink', inputName); } catch (e) { /* ignore */ }
+        try { ffmpeg.FS('unlink', outputName); } catch (e) { /* ignore */ }
 
         return new Blob([data.buffer], { type: 'video/mp4' });
       }
